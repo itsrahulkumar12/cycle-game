@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cycle Adventure: Forward Motion Illusion</title>
+    <style>
+        canvas { background-color: #cce7ff; display: block; margin: 0 auto; }
+        body { text-align: center; }
+        h1, h2 { margin-top: 0; }
+        .canva-container {
+            height: 250px; 
+            width: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7); /* Semi-transparent black overlay */
+            display: none; /* Initially hidden */
+            width: 300px; /* Match canvas size */
+            height: 250px; /* Match canvas size */
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .overlay img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Cover the entire canvas */
+        }
+        .button {
+            background-color: white;
+            border: none;
+            padding: 5px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 20px;
+            position: absolute;
+            border-radius: 4px;
+            bottom: 3px;
+            right: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- <h1>Cycle Adventure: Avoid Junk Food!</h1> -->
+    <div style="display: flex; justify-content: center; align-items: center;">
+        <div class="canva-container">
+            <canvas id="gameCanvas" width="300" height="250"></canvas>
+            
+            <!-- Overlay and button -->
+            <div class="overlay" id="gameOverOverlay">
+                <img src="./img/gameover-background.png" alt="Game Over" /> <!-- Replace with your overlay image -->
+                <button class="button" id="restartButton">Check Score</button>
+            </div>
+            </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        // console.log("CTX", ctx);
+        let cyclistX = canvas.width / 2;
+        let obstacles = [];
+        let stripeY = 0; 
+        let speed = 5; 
+        let score = 0; 
+        let gameOver = false; 
+        const roadWidth = canvas.width / 1.8; 
+        const roadStartX = (canvas.width - roadWidth) / 2;  
+        let lastObstacleX = null; 
+        const minObstacleSpacing = 50; 
+        const cyclistWidth = 40; 
+        const cyclistHeight = 70; 
+        const cycleImage = new Image();
+        cycleImage.src = './img/cycle.png'; 
+        const overlayImage = new Image();
+        overlayImage.src = './img/gameover-background.webp'; 
+
+        const heroImage = new Image();
+        heroImage.src = './img/hero-logo.png';
+
+        const sideImage = new Image();
+        sideImage.src = './img/side-img.png';
+
+        const rightSideImage = new Image();
+        rightSideImage.src = './img/hero-banner.png';
+
+        const obstacleImages = [];
+        const totalObstacleImages = 5;
+
+        for (let i = 1; i <= totalObstacleImages; i++) {
+        const img = new Image();
+        img.src = `./img/fastfood${i}.png`; 
+        obstacleImages.push(img);
+
+
+//         function resizeCanvas() {
+//     const aspectRatio = 300 / 250; // Original aspect ratio of the canvas
+//     if (window.innerWidth / window.innerHeight < aspectRatio) {
+//         // If the screen is too tall
+//         canvas.width = window.innerWidth;
+//         canvas.height = window.innerWidth / aspectRatio;
+//     } else {
+//         // If the screen is too wide
+//         canvas.height = window.innerHeight;
+//         canvas.width = window.innerHeight * aspectRatio;
+//     }
+// }
+
+// window.addEventListener('resize', resizeCanvas);
+//resizeCanvas(); // Initial resize
+
+}
+
+canvas.addEventListener('touchstart', function(event) {
+    const touch = event.touches[0]; // Get the first touch point
+
+    // Move left but ensure the cyclist doesn't move beyond the left boundary of the road
+    if (touch.clientX < canvas.width / 2 && cyclistX > roadStartX) {
+        cyclistX -= 20;
+    }
+    // Move right but ensure the cyclist doesn't move beyond the right boundary of the road
+    else if (touch.clientX >= canvas.width / 2 && cyclistX < roadStartX + roadWidth - cyclistWidth) {
+        cyclistX += 20;
+    }
+});
+
+        // Handle user input (left/right)
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowLeft' && cyclistX > roadStartX) {
+                cyclistX -= 20;
+            }
+            if (event.key === 'ArrowRight' && cyclistX < roadStartX + roadWidth - cyclistWidth) {
+                cyclistX += 20;
+            }
+        });
+
+        // Function to draw the cyclist (using an image)
+        function drawCyclist() {
+            ctx.drawImage(cycleImage, cyclistX, canvas.height - 70, cyclistWidth - 5, cyclistHeight - 10); // Draw the cycle image
+        }
+
+
+        // Function to draw static background
+// function drawStaticBackground() {
+//     // Green background (environment)
+//     ctx.fillStyle = 'black';  
+//     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+//     // Draw the road
+//     ctx.fillStyle = 'gray';  // Road
+//     ctx.fillRect(roadStartX, 0, roadWidth, canvas.height); // Wider road
+
+//     // Add rotated text 'HERO' to the left side of the road
+//     ctx.save(); // Save the current state of the canvas
+
+//     // Translate to the desired position (near the left side of the road)
+//     ctx.translate(50, canvas.height / 2); // Adjust the first value for X position
+
+//     // Rotate the text by -90 degrees (base towards the road)
+//     ctx.rotate(-Math.PI / 2);  // Rotate counterclockwise 90 degrees
+
+//     // Set text properties
+//     ctx.fillStyle = 'white';  // Text color
+//     ctx.font = '30px Arial';  // Font size and style
+
+//     // Draw the text "HERO" at the new rotated position
+//     ctx.fillText('HERO', 0, 0);  // Draw the text at the origin after translation
+
+//     ctx.restore(); // Restore the canvas to its original state (so the rotation only affects the text)
+// }
+
+function drawStaticBackground() {
+    // Green background (environment)
+    ctx.fillStyle = '#b23d24';  
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw the road
+    ctx.fillStyle = 'gray';  // Road
+    ctx.fillRect(roadStartX, 0, roadWidth, canvas.height); // Wider road
+
+    // Check if the hero image has loaded
+    if (sideImage.complete) {
+        // Save the current state of the canvas
+        ctx.save(); 
+
+        // Translate to the desired position (near the left side of the road)
+        const imageWidth = 67;  // Set the image width
+        const imageHeight = 256; // Set the image height
+        const xPos = 50;  // X position of the image
+        const yPos = canvas.height / 2;  // Center Y position
+
+        ctx.translate(xPos, yPos);  // Move to the position
+
+        // Rotate the canvas by -90 degrees (base towards the road)
+        //ctx.rotate(-Math.PI / 2);  // Rotate counterclockwise 90 degrees
+
+        // Draw the image at the new rotated position, centering it
+        ctx.drawImage(sideImage, -imageWidth /1.34, -130, imageWidth, imageHeight);  
+
+        // Restore the canvas state after drawing the image
+        ctx.restore(); 
+    }
+
+    if (heroImage.complete) {
+        // Save the current state of the canvas
+        ctx.save(); 
+
+        // Translate to the desired position (near the left side of the road)
+        const imageWidth = 50;  // Set the image width
+        const imageHeight = 50; // Set the image height
+        const xPos = 50;  // X position of the image
+        const yPos = canvas.height / 2;  // Center Y position
+
+        ctx.translate(xPos, yPos);  // Move to the position
+
+        // Rotate the canvas by -90 degrees (base towards the road)
+        //ctx.rotate(-Math.PI / 2);  // Rotate counterclockwise 90 degrees
+
+        // Draw the image at the new rotated position, centering it
+        ctx.drawImage(heroImage, -imageWidth /1.2, 70, imageWidth, imageHeight);  
+
+        // Restore the canvas state after drawing the image
+        ctx.restore(); 
+    }
+
+
+    if (rightSideImage.complete) {
+        // Save the current state of the canvas
+        ctx.save(); 
+
+        // Translate to the desired position (near the left side of the road)
+        const imageWidth = 100;  // Set the image width
+        const imageHeight = 50; // Set the image height
+        const xPos = 50;  // X position of the image
+        const yPos = canvas.height / 2;  // Center Y position
+
+        ctx.translate(xPos, yPos);  // Move to the position
+
+        // Rotate the canvas by -90 degrees (base towards the road)
+        ctx.rotate(-Math.PI / 2);  // Rotate counterclockwise 90 degrees
+
+        // Draw the image at the new rotated position, centering it
+        ctx.drawImage(rightSideImage, -50 , 190, imageWidth, imageHeight);  
+
+        // Restore the canvas state after drawing the image
+        ctx.restore(); 
+    }
+}
+
+
+
+        // Function to draw moving stripes on the road
+        function drawRoadStripes() {
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 5;
+
+            const stripeX = canvas.width / 2; // Keep stripes centered in the road
+
+            for (let i = 0; i < 6; i++) {
+                ctx.beginPath();
+                // Stripe position depends on the stripeY variable
+                let stripePosition = (stripeY + i * 100) % canvas.height;
+                ctx.moveTo(stripeX, stripePosition);
+                ctx.lineTo(stripeX, stripePosition + 20);
+                ctx.stroke();
+            }
+
+            // Move the stripes downward
+            stripeY += speed;
+            if (stripeY > canvas.height) {
+                stripeY = 0; // Reset the position of the stripes when they reach the bottom
+            }
+        }
+
+        // Function to draw obstacles (which move down)
+        // function drawObstacles() {
+        //     obstacles.forEach(obstacle => {
+        //         ctx.fillStyle = 'red';
+        //         ctx.fillRect(obstacle.x, obstacle.y, 30, 30); // Obstacle is a red square
+        //         obstacle.y += speed; // Move obstacle downwards
+        //     });
+        // }
+
+        function drawObstacles() {
+            obstacles.forEach(obstacle => {
+            const randomImage = obstacleImages[obstacle.imageIndex]; // Pick the image based on index
+            ctx.drawImage(randomImage, obstacle.x, obstacle.y, 40, 40); // Draw the obstacle image
+            obstacle.y += speed; // Move obstacle downwards
+            });
+        }
+
+        // Spawn new obstacles on the road only, ensuring no overlap
+        // function spawnObstacle() {
+        //     let x;
+        //     do {
+        //         // Generate a random x position on the road
+        //         x = roadStartX + Math.random() * (roadWidth - 30);
+        //     } while (lastObstacleX !== null && Math.abs(x - lastObstacleX) < minObstacleSpacing);
+
+        //     // Save the current obstacle's X position for future comparison
+        //     lastObstacleX = x;
+
+        //     // Spawn the obstacle at the new position
+        //     obstacles.push({ x, y: -30 }); // Spawn above the canvas
+        // }
+
+        function spawnObstacle() {
+    let x;
+    do {
+        // Generate a random x position on the road
+        x = roadStartX + Math.random() * (roadWidth - 30);
+    } while (lastObstacleX !== null && Math.abs(x - lastObstacleX) < minObstacleSpacing);
+
+    // Save the current obstacle's X position for future comparison
+    lastObstacleX = x;
+
+    // Randomly select an image index for this obstacle
+    const imageIndex = Math.floor(Math.random() * totalObstacleImages);
+
+    // Spawn the obstacle with the random image
+    obstacles.push({ x, y: -40, imageIndex }); // Spawn above the canvas
+}
+
+
+        // Function to check for collisions
+        function checkCollision(cyclistX, cyclistY, cyclistWidth, cyclistHeight, obstacle) {
+            return (
+                cyclistX < obstacle.x + 30 &&
+                cyclistX + cyclistWidth > obstacle.x &&
+                cyclistY < obstacle.y + 30 &&
+                cyclistY + cyclistHeight > obstacle.y
+            );
+        }
+
+        // Function to display the game over text
+        function displayGameOver() {
+            ctx.fillStyle = 'white';
+            ctx.font = '18px Arial';
+            ctx.fillText('Game Over', canvas.width / 3, canvas.height / 2);
+        }
+
+        // Function to show overlay and button
+        function showGameOverOverlay() {
+            const overlay = document.getElementById('gameOverOverlay');
+            overlay.style.display = 'flex'; // Show the overlay
+        }
+
+        // Function to open a new window with Google
+        function openGoogle() {
+            window.open('https://www.google.com', '_blank'); // Open Google in a new tab
+        }
+
+        // Function to draw the score on the canvas in the green area
+        function drawScore() {
+            ctx.fillStyle = 'white'; // Text color
+            ctx.font = '14px Arial';
+            ctx.fillText(`${score}`, canvas.width - 45, 30); // Position at the top right on the green area
+        }
+
+        // Main game loop
+        function gameLoop() {
+            if (gameOver) {
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the static background
+            drawStaticBackground();
+
+            // Draw moving road stripes
+            drawRoadStripes();
+
+            // Draw cyclist
+            drawCyclist();
+
+            // Draw and update obstacles
+            drawObstacles();
+
+            // Remove obstacles that are out of the canvas
+            obstacles = obstacles.filter(obstacle => obstacle.y < canvas.height);
+
+            // Check for collisions with the cyclist
+            const cyclistY = canvas.height - 50;
+            obstacles.forEach(obstacle => {
+                if (checkCollision(cyclistX, cyclistY, cyclistWidth, cyclistHeight, obstacle)) {
+                    gameOver = true;
+                    displayGameOver();
+                    setTimeout(() => {
+                        showGameOverOverlay();
+                    }, 2000);
+                }
+            });
+
+            // Update the score
+            score++;
+            drawScore(); // Display the score inside the canvas
+
+            // Continue the game loop
+            requestAnimationFrame(gameLoop);
+        }
+
+        setInterval(spawnObstacle, 2000); // Spawn a new obstacle every 2 seconds
+        cycleImage.onload = gameLoop; // Start the game loop once the image has loaded
+
+        // Button event listener
+        document.getElementById('restartButton').addEventListener('click', openGoogle);
+    </script>
+</body>
+</html>
